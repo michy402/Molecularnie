@@ -1,0 +1,408 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тест: Молекулярные болезни</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
+  }
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    overflow: hidden;
+  }
+  .header {
+    background: linear-gradient(135deg, #0f7b6c 0%, #1fa84f 100%);
+    color: #fff;
+    padding: 28px 40px;
+    text-align: center;
+  }
+  .header h1 { font-size: 28px; margin-bottom: 8px; }
+  .header p { font-size: 15px; opacity: .9; }
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #f0f5f3;
+    padding: 12px 40px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 15px;
+  }
+  .progress-bar {
+    flex: 1 1 200px;
+    height: 10px;
+    background: #dde7e3;
+    border-radius: 10px;
+    overflow: hidden;
+    min-width: 120px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #11998e, #38ef7d);
+    width: 0%;
+    transition: width .3s ease;
+  }
+  .progress-text {
+    font-size: 14px; font-weight: 600; color: #555; white-space: nowrap;
+  }
+  .score-badge {
+    font-size: 14px; font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: #e3f5ec;
+    color: #0f7b6c;
+    white-space: nowrap;
+  }
+
+  .quiz-body { padding: 25px 40px 40px; }
+
+  .question-card {
+    margin-bottom: 22px;
+    padding: 18px 20px;
+    border: 2px solid #e8e8e8;
+    border-radius: 12px;
+    background: #fafafa;
+    transition: border-color .3s, background .3s;
+  }
+  .question-card.answered { border-color: #c5e1d6; }
+  .question-card.correct   { border-color: #4caf50; background: #f1f8e9; }
+  .question-card.incorrect { border-color: #f44336; background: #fff3f3; }
+
+  .question-text {
+    font-size: 16px; font-weight: 600; margin-bottom: 14px;
+    line-height: 1.5; color: #2c3e50;
+  }
+  .question-number {
+    display: inline-block;
+    background: #0f7b6c; color: #fff;
+    min-width: 30px; height: 30px; line-height: 30px;
+    text-align: center; border-radius: 50%;
+    font-size: 14px; margin-right: 8px; font-weight: 700;
+    padding: 0 6px;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 9px; }
+  .option {
+    display: flex; align-items: center;
+    padding: 11px 15px;
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all .2s;
+    font-size: 15px; line-height: 1.4;
+    user-select: none;
+  }
+  .option:hover:not(.disabled) { border-color: #38ef7d; background: #eefaf3; }
+  .option.selected:not(.disabled) { border-color: #11998e; background: #e3f5ec; }
+  .option.correct-answer { border-color: #4caf50 !important; background: #e8f5e9 !important; }
+  .option.wrong-answer  { border-color: #f44336 !important; background: #ffebee !important; }
+  .option.disabled { cursor: default; }
+
+  .option input[type="radio"] {
+    appearance: none;
+    width: 20px; height: 20px;
+    border: 2px solid #9e9e9e;
+    border-radius: 50%;
+    margin-right: 12px;
+    flex-shrink: 0;
+    position: relative;
+    transition: all .2s;
+  }
+  .option input[type="radio"]:checked { border-color: #11998e; background: #11998e; }
+  .option input[type="radio"]:checked::after {
+    content:''; position:absolute; top:50%; left:50%;
+    transform: translate(-50%,-50%);
+    width:8px; height:8px; background:#fff; border-radius:50%;
+  }
+  .option.correct-answer input[type="radio"] { border-color:#4caf50; background:#4caf50; }
+  .option.wrong-answer input[type="radio"]  { border-color:#f44336; background:#f44336; }
+
+  .marker { margin-left: auto; font-size: 18px; padding-left: 8px; flex-shrink: 0; }
+
+  .btn-container {
+    text-align: center;
+    padding: 10px 40px 40px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+  .btn {
+    padding: 13px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all .3s;
+  }
+  .btn-secondary { background: #e0e0e0; color: #333; }
+  .btn-secondary:hover { background: #d0d0d0; }
+
+  .hint {
+    font-size: 13px; color: #888; text-align: center; margin: 10px 40px 30px;
+    font-style: italic;
+  }
+
+  @media (max-width: 600px) {
+    .quiz-body, .toolbar, .btn-container { padding-left: 16px; padding-right: 16px; }
+    .header { padding: 22px 16px; }
+    .header h1 { font-size: 22px; }
+    .option { font-size: 14px; }
+    .hint { margin-left: 16px; margin-right: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🧬 Молекулярные болезни</h1>
+    <p>Тест по биологии · 89 вопросов</p>
+  </div>
+
+  <div class="toolbar">
+    <div class="progress-bar"><div class="progress-bar-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 89</div>
+    <div class="score-badge" id="scoreBadge">✓ 0 · ✗ 0</div>
+  </div>
+
+  <div class="quiz-body" id="quizBody"></div>
+
+  <div class="hint">Ответ проверяется сразу при выборе — правильный подсветится зелёным, неправильный красным.</div>
+
+  <div class="btn-container">
+    <button class="btn btn-secondary" id="resetBtn">Пройти заново</button>
+  </div>
+</div>
+
+<script>
+/* ===== Данные теста (из XML) ===== */
+const questionsData = [
+ {n:1,text:"Заболевание, при котором происходит мутация структурного гена, ответственного за синтез фермента галактозо-1-фосфат-уридилтрансферазы",options:[{t:"фруктоземия",c:false},{t:"алкаптонурия",c:false},{t:"галактоземия",c:true},{t:"фенилкетонурия",c:false}]},
+ {n:2,text:"Наследственная ферментопатия, проявляющаяся с 5-6 месяцев, с момента добавления к грудному молоку прикорма пюреобразной консистенции",options:[{t:"галактоземия",c:false},{t:"алкаптонурия",c:false},{t:"фенилкетонурия",c:false},{t:"фруктоземия",c:true}]},
+ {n:3,text:"Наследственная ферментопатия, характеризующаяся нарушением метаболизма молочного сахара, это:",options:[{t:"галактоземия",c:true},{t:"фруктоземия",c:false},{t:"алкаптонурия",c:false},{t:"фенилкетонурия",c:false}]},
+ {n:4,text:"Мультифакторное заболевание, при котором взаимодействие как внутренних так и внешних факторов приводит к нарушению углеводного обмена, это:",options:[{t:"фруктоземия",c:false},{t:"сахарный диабет",c:true},{t:"атеросклероз",c:false},{t:"галактоземия",c:false}]},
+ {n:5,text:"Причина заболевания, при котором наблюдается недостаточность фермента фруктозо-1фосфат-альдолазы",options:[{t:"алкаптонурия",c:false},{t:"галактоземия",c:false},{t:"сахарный диабет",c:false},{t:"фруктоземия",c:true}]},
+ {n:6,text:"Метод диагностики, применяемый при сахарном диабете:",options:[{t:"цитогенетический",c:false},{t:"дерматоглифика",c:false},{t:"биохимический",c:true},{t:"близнецовый",c:false}]},
+ {n:7,text:"Наследственная патология углеводного обмена (ферментопатия), при котором грудные дети хорошо переносят женское молоко, но эта ферментопатия заканчивается развитием цирроза печени без развития катаракты и умственной отсталости:",options:[{t:"галактоземия",c:false},{t:"фруктозурия",c:true},{t:"сахарный диабет",c:false},{t:"алкаптонурия",c:false}]},
+ {n:8,text:"Инсулиновая недостаточность характеризуется:",options:[{t:"увеличением меланина",c:false},{t:"гипергликемией (увеличением уровня сахара в крови)",c:true},{t:"отсутствием галактозы",c:false},{t:"отсутствием тирозиназы",c:false}]},
+ {n:9,text:"Тип наследования галактоземии",options:[{t:"аутосомно-рецессивный",c:true},{t:"аутосомно-доминантный",c:false},{t:"X-сцепленный рецессивный",c:false},{t:"X-сцепленный доминантный",c:false}]},
+ {n:10,text:"Заболевание, при котором происходит интоксикация (рвота, понос), расстройство пищеварения, развитие катаракты и умственной отсталости:",options:[{t:"сахарный диабет",c:false},{t:"галактоземия",c:true},{t:"фруктоземия",c:false},{t:"альбинизм",c:false}]},
+ {n:11,text:"Этот метод может применяться на втором этапе МГК",options:[{t:"популяционно-статистический",c:true},{t:"кариотипирование",c:false},{t:"биохимический метод",c:false},{t:"метод гибридизации соматических клеток",c:false}]},
+ {n:12,text:"Популяционно-статистический метод НЕ МОЖЕТ",options:[{t:"установить кариотип, характерный для определенной популяции организмов",c:true},{t:"охарактеризовать демографические процессы в популяциях",c:false},{t:"оценить роль наследственности и среды в формировании генетической структуры популяции",c:false},{t:"охарактеризовать генетический груз популяции",c:false}]},
+ {n:13,text:"В идеальной популяции частоты генов и генотипов находятся в равновесии и сохраняются неизменными в ряду поколений - это",options:[{t:"закон \"чистоты\" гамет",c:false},{t:"закон Харди-Вайнберга",c:true},{t:"закон гомологических рядов наследствененой измечивости",c:false},{t:"биогенетический закон Геккеля-Мюллера",c:false}]},
+ {n:14,text:"Идеальной популяцией согласно закону Харди-Вайнберга НЕ ЯВЛЯЕТСЯ популяция, где",options:[{t:"царит свободное скрещивание",c:false},{t:"не действует естественный отбор",c:false},{t:"происходит миграция особей",c:true},{t:"бесконечно большая численность",c:false}]},
+ {n:15,text:"Для расчета частоты генотипов используется следующая формула",options:[{t:"p + q = 1",c:false},{t:"p + 2pq + q = 1",c:false},{t:"2p + pq + 2q = 1",c:false},{t:"p2 + 2pq + q2 =1",c:true}]},
+ {n:16,text:"Для расчета частоты аллелей в популяции используется следующая формула",options:[{t:"2p + pq + 2q = 1",c:false},{t:"p2 + 2pq + q2 =1",c:false},{t:"p + q = 1",c:true},{t:"p + 2pq + q = 1",c:false}]},
+ {n:17,text:"В малых по численности популяциях людей наблюдается изменение частот доминантных и рецессивных аллелей, в связи с этим ИЗОЛЯТЫ - это популяции людей с численностью",options:[{t:"от 4 до 6 тысяч человек",c:false},{t:"от 1.5 до 4 тысяч человек",c:false},{t:"до 1.5 тысяч человек",c:true},{t:"более 6 тысяч человек",c:false}]},
+ {n:18,text:"В малых по численности популяциях людей наблюдается изменение частот доминантных и рецессивных аллелей, в связи с этим ДЕМЫ - это популяции людей с численностью",options:[{t:"более 4 тысяч человек",c:false},{t:"до 500 человек",c:false},{t:"от 1.5 до 4 тысяч человек",c:true},{t:"от 500 до 1.5 тысяч человек",c:false}]},
+ {n:19,text:"Идеальная популяция",options:[{t:"имеет численность более 10 тысяч человек",c:false},{t:"в природе не существует",c:true},{t:"это демы",c:false},{t:"это изоляты",c:false}]},
+ {n:20,text:"НЕ является фактором, приводящим к смещению равновесия генов и генотипов в популяции",options:[{t:"мутации",c:false},{t:"популяционные волны",c:false},{t:"панмиксия",c:true},{t:"дрейф генов",c:false}]},
+ {n:21,text:"Гепатоцеребральная дистрофия связана с патологией:",options:[{t:"гексозаминидазы",c:false},{t:"галактозо-1-фосфат-уридилтрансферазы",c:false},{t:"фенилаланин-4-гидроксилазы",c:false},{t:"церулоплазмина",c:true}]},
+ {n:22,text:"Клиническое название болезни Вильсона-Коновалова:",options:[{t:"гемоглобинопатия",c:false},{t:"амавротическая идиотия",c:false},{t:"гепатоцеребральная дистрофия",c:true},{t:"фенилпировиноградная олигофрения",c:false}]},
+ {n:23,text:"Нарушение процессов обмена меди в печени происходит при:",options:[{t:"гепатоцеребральной дистрофии",c:true},{t:"гемоглобинопатиях",c:false},{t:"амавротической идиотии",c:false},{t:"фенилпировиноградной олигофрении",c:false}]},
+ {n:24,text:"Кольцо Кайзера-Флейшера по периферии роговицы диагностируется при:",options:[{t:"Синдроме Элерса-Данлоса",c:false},{t:"Болезни Тея-Сакса",c:false},{t:"Болезни Кули",c:false},{t:"Болезни Вильсона-Коновалова",c:true}]},
+ {n:25,text:"Заболевание, в основе которого лежит замена валина на глутаминовую кислоту в 6-ом положении β цепи гемоглобина:",options:[{t:"талассемия",c:false},{t:"болезнь Кули",c:false},{t:"серповидноклеточная анемия",c:true},{t:"галактоземия",c:false}]},
+ {n:26,text:"Заболевание, в основе которого лежит уменьшение содержания глобина в молекуле гемоглобина в результате генной мутации:",options:[{t:"талассемия",c:true},{t:"серповидноклеточная анемия",c:false},{t:"галактоземия",c:false},{t:"гепатоцеребральная дистрофия",c:false}]},
+ {n:27,text:"Мутация, в результате котором эритроциты приобретают форму серпа:",options:[{t:"генная",c:true},{t:"хромосомная",c:false},{t:"трисомия",c:false},{t:"моносомия",c:false}]},
+ {n:28,text:"Тип взаимодействия аллельных генов, имеющий место при наследовании серповидноклеточной анемии:",options:[{t:"полное доминирование",c:false},{t:"кодоминирование",c:false},{t:"аллельное исключение",c:false},{t:"неполное доминирование",c:true}]},
+ {n:29,text:"Генотип женщины с серповидноклеточной анемией и устойчивой к малярии:",options:[{t:"Аа",c:true},{t:"аа",c:false},{t:"АА",c:false},{t:"ХАХа",c:false}]},
+ {n:30,text:"Клинический симптом \"лицо бурундука\" характерен для:",options:[{t:"талассемии",c:true},{t:"серповидноклеточной анемии",c:false},{t:"амавротической идиотии",c:false},{t:"галактоземии",c:false}]},
+ {n:31,text:"Тип наследования болезни Тея-Сакса",options:[{t:"аутосомно-рецессивный",c:true},{t:"аутосомно-доминантный",c:false},{t:"Х-сцепленный рецессивный",c:false},{t:"Х-сцепленный доминантный",c:false}]},
+ {n:32,text:"Ферментопатия, связанная с нарушение липидного обмена",options:[{t:"атеросклероз",c:false},{t:"синдром Элерса-Данлоса",c:false},{t:"болезнь Вильсона-Коновалова",c:false},{t:"болезнь Тея-Сакса",c:true}]},
+ {n:33,text:"Причина амавротической семейной идиотии",options:[{t:"нарушение синтеза фермента гексозаминидазы А",c:true},{t:"нарушение синтеза фермента фенилаланин-4-гидролазы",c:false},{t:"нарушение синтеза фермента тирозиназы",c:false},{t:"нарушение синтеза фермента фруктозо-1-фосфат-альдолазы",c:false}]},
+ {n:34,text:"Фермент гексозаминидаза А",options:[{t:"расщепляет ганглиозиды в клетках головного мозга",c:true},{t:"участвует в превращении фенилаланина в гомогентизиновую кислоту",c:false},{t:"участвует в превращении фенилаланина в тирозин",c:false},{t:"необходим для синтеза церулоплазмина",c:false}]},
+ {n:35,text:"Атрофия сетчатки и зрительного нерва характерна для",options:[{t:"витамин Д-резистентного рахиата",c:false},{t:"болезни Тея-Сакса",c:true},{t:"синдрома Элерса-Данлоса",c:false},{t:"болезни Вильсона-Коновалова",c:false}]},
+ {n:36,text:"Нейроны, заполненные мелкозернистым жироподобным веществом характерны для",options:[{t:"ожирения",c:false},{t:"атеросклероза",c:false},{t:"болезни Вильсона-Коновалова",c:false},{t:"болезни Тея-Сакса",c:true}]},
+ {n:37,text:"Первые клинические симптомы болезни Тея-Сакса появляются в",options:[{t:"6-7 мясецев",c:true},{t:"2-5 лет",c:false},{t:"6-14 лет",c:false},{t:"после 30 лет",c:false}]},
+ {n:38,text:"Тип наследования атеросклероза",options:[{t:"аутосомно-доминантный",c:false},{t:"полигенный",c:true},{t:"аутосомно-рецессивный",c:false},{t:"сцепленный с полом",c:false}]},
+ {n:39,text:"К мултифакториальным заболеваниям относится",options:[{t:"фенилкетонурия",c:false},{t:"атеросклероз",c:true},{t:"витамин Д-резистентный рахит",c:false},{t:"болезнь Элерса-Данлоса",c:false}]},
+ {n:40,text:"Доклиническая фаза атеросклероза",options:[{t:"фиброзная бляшка",c:false},{t:"жировое пятно",c:true},{t:"атерокальциноз",c:false},{t:"образование капсулы фиброзной бляшки",c:false}]},
+ {n:41,text:"Для диагностики какого заболевания применяется биохимический метод",options:[{t:"Эдвардса",c:false},{t:"Фенилкетонурии",c:true},{t:"Патау",c:false},{t:"Шерешевского-Тернера",c:false}]},
+ {n:42,text:"Показателем для применения биохимического метода служит",options:[{t:"специфичный запах от ребенка",c:true},{t:"наличие в кариотипе человека 47 хромосом",c:false},{t:"делеция короткого плеча пятой хромосомы",c:false},{t:"моносомия по Х-хромосоме",c:false}]},
+ {n:43,text:"Для диагностики какого заболевания применяется биохимический метод",options:[{t:"Дауна",c:false},{t:"Эдвардса",c:false},{t:"Элерса-Данлоса",c:true},{t:"Крика кошки",c:false}]},
+ {n:44,text:"Какое заболевание можно диагностировать биохимическим методом",options:[{t:"Патау",c:false},{t:"Вильсона-Коновалова",c:true},{t:"синдром \"филадельфийской хромосома\"",c:false},{t:"синром лишней Х-хромосомы",c:false}]},
+ {n:45,text:"Для диагностики какой группы заболеваний применяется биохимический метод",options:[{t:"моносомий",c:false},{t:"гетероплоидий",c:false},{t:"хромосомных аберраций",c:false},{t:"нарушений минерального обмена",c:true}]},
+ {n:46,text:"Биохимический метод применяется для диагностики",options:[{t:"нулесомий",c:false},{t:"молекулярных болезней",c:true},{t:"хромосомных болезней",c:false},{t:"полиплоидий",c:false}]},
+ {n:47,text:"Диагностика заболеваний вызванных генными мутациями проводится с помощью метода",options:[{t:"биохимического",c:true},{t:"генеалогического",c:false},{t:"популяционно-статистического",c:false},{t:"дерматоглифики",c:false}]},
+ {n:48,text:"Назовите экпресс метод при биохимичсеском методе исследования",options:[{t:"эмпирический метод",c:false},{t:"определение полового хроматина",c:false},{t:"скрининг тест",c:true},{t:"кариотипирование",c:false}]},
+ {n:49,text:"Какой материал не используется для биохимический исследований",options:[{t:"кровь, моча",c:false},{t:"набор хромосом",c:true},{t:"околоплодные воды",c:false},{t:"спинномозговая жидкость",c:false}]},
+ {n:50,text:"Показания к применению биохимического метода",options:[{t:"трисомия",c:false},{t:"моносомия",c:false},{t:"патологии транспортных белков",c:true},{t:"полисомия",c:false}]},
+ {n:51,text:"Мутации, вызывающие молекулярные болезни, могут затрагивать белки:",options:[{t:"структурные",c:false},{t:"все вышеперечисленное",c:true},{t:"транспортные",c:false},{t:"ферменты",c:false}]},
+ {n:52,text:"Синдром Элерса-Данлоса является примером",options:[{t:"патологии ферментативных белков",c:false},{t:"патологии транспортных белков",c:false},{t:"патологии структурных белков",c:true},{t:"патологии регуляторных белков",c:false}]},
+ {n:53,text:"Ферментопатия, связанная с нарушением аминокислотного обмена",options:[{t:"галактоземия",c:false},{t:"альбинизм",c:true},{t:"атеросклероз",c:false},{t:"наследственная форма рахита",c:false}]},
+ {n:54,text:"Ферментопатия, связанная с нарушением липидного обмена",options:[{t:"алкаптонурия",c:false},{t:"фенилкетонурия",c:false},{t:"болезнь Тея-Сакса",c:true},{t:"наследственная форма рахита",c:false}]},
+ {n:55,text:"Ферментопатия, связанная с нарушением углеводного обмена",options:[{t:"алкаптонурия",c:false},{t:"галактоземия",c:true},{t:"альбинизм",c:false},{t:"наследственная форма рахита",c:false}]},
+ {n:56,text:"Ферментопатия, связанная с нарушением минерального обмена",options:[{t:"атеросклероз",c:false},{t:"болезнь Тея-Сакса",c:false},{t:"наследственная форма рахита",c:true},{t:"альбинизм",c:false}]},
+ {n:57,text:"Болезнь Вильсона-Коновалова является примером",options:[{t:"патологии структурных белков",c:false},{t:"патологии транспортных белков",c:true},{t:"патологии ферментативных белков",c:false},{t:"патологии регуляторных белков",c:false}]},
+ {n:58,text:"Талассемия является примером",options:[{t:"патологии ферментативных белков",c:false},{t:"патологии регуляторных белков",c:false},{t:"патологии транспортных белков",c:true},{t:"патологии структурных белков",c:false}]},
+ {n:59,text:"Биосинтез, специфичность и функция определенного фермента у человека контролируется",options:[{t:"блоком структурных и функциональных генов",c:false},{t:"одним геном",c:true},{t:"тремя разными генами",c:false},{t:"нет верного ответа",c:false}]},
+ {n:60,text:"Согласно концепции метаболитического блока А. Гаррода, в организме действует система",options:[{t:"ген - биохимическая реакция - белок-фермент",c:false},{t:"белок-фермент - биохимическая реакция - ген",c:false},{t:"ген - белок-фермент - биохимическая реакция",c:true},{t:"биохимическая реакция - белок-фермент - ген",c:false}]},
+ {n:61,text:"Частота встречаемости наследственной формы рахита",options:[{t:"1:1000",c:false},{t:"1:250 000",c:false},{t:"1:20 000",c:true},{t:"1: 150 000",c:false}]},
+ {n:62,text:"При диагностике наследственной формы рахита в крови определяется",options:[{t:"высокий уровень кальция",c:false},{t:"низкий уровень фосфора",c:true},{t:"высокий уровень фосфора",c:false},{t:"низкий уровень фосфора и высокий уровень кальция",c:false}]},
+ {n:63,text:"Для наследственной формы рахита не характерно",options:[{t:"гипертрофия лобных бугров",c:false},{t:"деформация ног",c:false},{t:"гиперэластичность кожи",c:true},{t:"мышечная гипотония",c:false}]},
+ {n:64,text:"Наследственная форма рахита обусловлена",options:[{t:"снижением выработки кальция",c:false},{t:"снижением реабсорбции фосфатов в почечных канальцах",c:true},{t:"недостатком магния",c:false},{t:"дефицитом коллагеновых волокон",c:false}]},
+ {n:65,text:"Наследственная форма рахита характеризуется нарушением",options:[{t:"минерального обмена K и Na",c:false},{t:"минерального обмена Mg",c:false},{t:"минерального обмена фосфатов",c:true},{t:"минерального обмена Cl",c:false}]},
+ {n:66,text:"Для наследственной формы рахита характерен тип наследования",options:[{t:"аутосомно-доминантный",c:false},{t:"доминантный, сцепленный с X-хромосомой",c:true},{t:"рецессивный, сцепленный с X-хромосомой",c:false},{t:"голандрический",c:false}]},
+ {n:67,text:"Нарушение минерального обмена связано с",options:[{t:"сахарным диабетом",c:false},{t:"алкаптонурией",c:false},{t:"рахитом",c:true},{t:"атеросклерозом",c:false}]},
+ {n:68,text:"Недостаток фосфора является причиной",options:[{t:"соединительнотканной патологии",c:false},{t:"нарушения минерализации костей скелета",c:true},{t:"недостаточной секрецией инсулина",c:false},{t:"недостаточности оксидазы гомогентизиновой кислоты",c:false}]},
+ {n:69,text:"Деформация грудной клетки и гипертрофия лобных бугров на первом году жизни характерен для",options:[{t:"алкаптонурии",c:false},{t:"галактоземии",c:false},{t:"рахита",c:true},{t:"синдрома Элерса-Данлоса",c:false}]},
+ {n:70,text:"Наследственная системная соединительнотканная дисплазия, обусловленная недостаточным развитием коллагеновых структур:",options:[{t:"болезнь Вильсона - Коновалова",c:false},{t:"болезнь Тея - Сакса",c:false},{t:"синдром Элерса - Данлоса",c:true},{t:"талассемия",c:false}]},
+ {n:71,text:"Тип наследования НЕ характерный для синдрома Элерса - Данлоса:",options:[{t:"аутосомно - рецессивный",c:false},{t:"аутосомно - доминантный",c:false},{t:"Х - сцепленный доминантный",c:true},{t:"Х - сцепленный рецессивный",c:false}]},
+ {n:72,text:"В современную классификацию синдрома Элерса - Данлоса входит:",options:[{t:"4 типа патологии",c:false},{t:"5 типов патологии",c:false},{t:"6 типов патологии",c:true},{t:"7 типов патологии",c:false}]},
+ {n:73,text:"Синдром Элерса - Данлоса характеризуется:",options:[{t:"повышением концентрации меди в крови",c:false},{t:"недостаточным развитием коллагеновых структур",c:true},{t:"понижением кишечной абсорбции кальция",c:false},{t:"отложением холестерина во внутренней оболочке сосудов",c:false}]},
+ {n:74,text:"К клиническим симптомам синдрома Элерса - Данлоса НЕ относятся:",options:[{t:"перерастяжение кожи",c:false},{t:"гипермобильность суставов",c:false},{t:"диспропорциональное телосложение за счет нижнего сегмента",c:true},{t:"слабость сосудистой стенки",c:false}]},
+ {n:75,text:"Типы синдрома Элерса - Данлоса с серьезным или неблагоприятным прогнозом для жизни:",options:[{t:"артрохалазия, сосудистый",c:false},{t:"классический, сосудистый",c:true},{t:"кифосколиоз, артрохалазия",c:false},{t:"кифосколиоз, дерматоспараксис",c:false}]},
+ {n:76,text:"Молекулярная болезнь, при которой выявляется патология структурных белков:",options:[{t:"болезнь Вильсона - Коновалова",c:false},{t:"болезнь Тея - Сакса",c:false},{t:"синдром Элерса - Данлоса",c:true},{t:"талассемия",c:false}]},
+ {n:77,text:"Паталогия, в основе развития которой лежат мутации генов, обуславливающие структурную и количественную патологию коллагена:",options:[{t:"болезнь Вильсона - Коновалова",c:false},{t:"синдром Элерса - Данлоса",c:true},{t:"болезнь Тея - Сакса",c:false},{t:"талассемия",c:false}]},
+ {n:78,text:"Ведущий синдром в клинической картине синдрома Элерса - Данлоса:",options:[{t:"суставной",c:false},{t:"поражение скелета",c:false},{t:"кожный",c:true},{t:"сосудистый",c:false}]},
+ {n:79,text:"Один из симптомокомплексов (близорукость, хрупкость склеры, опущение верхнего века, эпикант, отверстия в глазном яблоке) характерен для:",options:[{t:"болезни Вильсона - Коновалова",c:false},{t:"галактоземии",c:false},{t:"синдрома Элерса - Данлоса",c:true},{t:"витамин Д - резистентного рахита",c:false}]},
+ {n:80,text:"Причины развития фенилкетонурии:",options:[{t:"недостаток фермента оксидазы гомогентезиновой кислоты",c:false},{t:"накопление в крови фенилпировиноградной кислоты",c:false},{t:"недостаток фермента фенилаланингидроксилазы",c:true},{t:"накопление в крови малеилацетоуксусной кислоты",c:false}]},
+ {n:81,text:"Диагностика фенилкетонурии у новорожденного:",options:[{t:"добавление в мочу 5% раствора хлористоводородной кислоты",c:false},{t:"индикаторная бумажка, смоченная 10% раствором хлорида железа(III)",c:true},{t:"индикаторная бумажка, смоченная 5% раствором хлористоводородной кислоты",c:false},{t:"индикаторная бумажка, смоченная 10% хлористоводородной кислоты",c:false}]},
+ {n:82,text:"Охроноз - системокомплекс состояний, развивающийся при:",options:[{t:"фенилкетонурии",c:false},{t:"галактоземии",c:false},{t:"алкаптонурии",c:true},{t:"сахарном диабете",c:false}]},
+ {n:83,text:"Диетические меры являются эффективным средством предупреждения тяжелых форм заболевания:",options:[{t:"альбинизма",c:false},{t:"фенилкетонурии",c:true},{t:"амавротической идиотии",c:false},{t:"гипофосфатемического рахита",c:false}]},
+ {n:84,text:"Выберите группу признаков, нехарактерных для фенилкетонурии:",options:[{t:"шелушение кожи, дерматиты, экзема",c:false},{t:"вялость, срыгивания судорожный синдром",c:false},{t:"рвота, понос, гипотрофия",c:true},{t:"умственная отсталость, безразличие к окружающим, задержка физического развития",c:false}]},
+ {n:85,text:"Печеночный фермент фенил-4-гидроксилаза в норме катализирует превращение:",options:[{t:"фенилаланина в меланин",c:false},{t:"фенилаланина в тирозин",c:true},{t:"тирозина в фенилаланин",c:false},{t:"тирозина в меланин",c:false}]},
+ {n:86,text:"Аминокислота, вырабатываемая в организме человека в результате гидроксилирования фенилаланина:",options:[{t:"лизин",c:false},{t:"треонин",c:false},{t:"тирозин",c:true},{t:"аланин",c:false}]},
+ {n:87,text:"Генная мутация, приводящая к нарушению или отсутствию активности тирозиназы:",options:[{t:"фенилкетонурия",c:false},{t:"алкаптонурия",c:false},{t:"альбинизм",c:true},{t:"галактезимия",c:false}]},
+ {n:88,text:"Кальцификация аорты и клапанов сердца происходит при:",options:[{t:"фенилкетонурия",c:false},{t:"альбинизм",c:false},{t:"алкаптонурия",c:true},{t:"галактезимия",c:false}]},
+ {n:89,text:"Вещество, откладывающееся в тканях и являющееся исходным материалом для образования пигмента:",options:[{t:"фенилпировиноградная кислота",c:false},{t:"меланин",c:false},{t:"гомогентезиновая кислота",c:true},{t:"малеилацетоуксусная кислота",c:false}]}
+];
+
+/* ===== Состояние ===== */
+const answers = {};      // {qIndex: oIndex}
+let correctCount = 0;
+let wrongCount = 0;
+
+const quizBody    = document.getElementById('quizBody');
+const progressFill= document.getElementById('progressFill');
+const progressText= document.getElementById('progressText');
+const scoreBadge  = document.getElementById('scoreBadge');
+const resetBtn    = document.getElementById('resetBtn');
+
+/* ===== Рендер всех вопросов списком ===== */
+function renderQuestions() {
+  quizBody.innerHTML = '';
+  questionsData.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.id = 'qcard-' + qi;
+
+    const qText = document.createElement('div');
+    qText.className = 'question-text';
+    qText.innerHTML = `<span class="question-number">${q.n}</span>${escapeHtml(q.text)}`;
+    card.appendChild(qText);
+
+    const optsWrap = document.createElement('div');
+    optsWrap.className = 'options';
+
+    q.options.forEach((opt, oi) => {
+      const label = document.createElement('label');
+      label.className = 'option';
+      label.dataset.qindex = qi;
+      label.dataset.oindex = oi;
+
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'q_' + qi;
+      radio.value = oi;
+      radio.addEventListener('change', () => selectOption(qi, oi));
+
+      const span = document.createElement('span');
+      span.textContent = opt.t;
+
+      const marker = document.createElement('span');
+      marker.className = 'marker';
+
+      label.appendChild(radio);
+      label.appendChild(span);
+      label.appendChild(marker);
+      optsWrap.appendChild(label);
+    });
+
+    card.appendChild(optsWrap);
+    quizBody.appendChild(card);
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ===== Мгновенная проверка при выборе ===== */
+function selectOption(qi, oi) {
+  if (answers[qi] !== undefined) return;
+
+  answers[qi] = oi;
+  const q = questionsData[qi];
+  const correctIndex = q.options.findIndex(o => o.c);
+  const card = document.getElementById('qcard-' + qi);
+
+  card.querySelectorAll('.option').forEach(el => {
+    const idx = Number(el.dataset.oindex);
+    el.classList.add('disabled');
+    el.querySelector('input').disabled = true;
+    const marker = el.querySelector('.marker');
+
+    if (idx === correctIndex) {
+      el.classList.add('correct-answer');
+      marker.textContent = '✓';
+    }
+    if (idx === oi && oi !== correctIndex) {
+      el.classList.add('wrong-answer');
+      marker.textContent = '✗';
+    }
+  });
+
+  if (oi === correctIndex) {
+    card.classList.add('correct');
+    correctCount++;
+  } else {
+    card.classList.add('incorrect');
+    wrongCount++;
+  }
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const answered = Object.keys(answers).length;
+  const total = questionsData.length;
+  progressFill.style.width = (answered / total * 100) + '%';
+  progressText.textContent = answered + ' / ' + total;
+  scoreBadge.textContent = '✓ ' + correctCount + ' · ✗ ' + wrongCount;
+}
+
+/* ===== Сброс / начать заново ===== */
+function resetQuiz() {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  correctCount = 0;
+  wrongCount = 0;
+  renderQuestions();
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+resetBtn.addEventListener('click', resetQuiz);
+
+/* ===== Старт ===== */
+renderQuestions();
+updateProgress();
+</script>
+</body>
+</html>
